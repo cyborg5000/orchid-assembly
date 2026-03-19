@@ -1,0 +1,50 @@
+@media (max-width: 767px) {
+  html,
+  body {
+    overflow-x: hidden !important;
+    background: #000;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  .ZRRuDw {
+    overflow-x: hidden !important;
+    overscroll-behavior-x: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .ZRRuDw img,
+  .ZRRuDw svg,
+  .ZRRuDw video,
+  .ZRRuDw canvas {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+
+  .ZRRuDw a,
+  .ZRRuDw button,
+  .ZRRuDw [role="button"],
+  .ZRRuDw [role="menuitem"],
+  .ZRRuDw [role="switch"] {
+    min-width: 44px;
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+
+  .ZRRuDw nav,
+  .ZRRuDw [role="navigation"] {
+    padding-left: max(16px, env(safe-area-inset-left)) !important;
+    padding-right: max(16px, env(safe-area-inset-right)) !important;
+  }
+}
+
+@media (max-width: 479px) {
+  .ZRRuDw {
+    scroll-padding-top: calc(env(safe-area-inset-top) + 8px);
+    padding-bottom: max(12px, env(safe-area-inset-bottom)) !important;
+  }
+}
