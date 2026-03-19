@@ -1,0 +1,10 @@
+node_modules/
+
+# Vite build output
+/dist
+
+# Logs
+npm-debug.log*
+.yarn-integrity
+yarn-debug.log*
+yarn-error.log*
