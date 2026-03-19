@@ -419,6 +419,12 @@ nav.jDe9Eg a[role="menuitem"][aria-current="page"] {
   pointer-events: none !important;
 }
 
+.oa-suppress-section-brand-asset {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
 .oa-main-shell .oa-wordmark,
 .oa-main-shell .oa-hero-kicker,
 .oa-main-shell .oa-hero-title {

@@ -12,6 +12,7 @@
 
   const brandName = "Orchid Assembly";
   const brandLine = "Immersive Experiences, Measurable Impact.";
+  const headerLogoAsset = "/header-logo.png";
   const brandTargets = new Set([
     normalize(brandName),
     normalize(brandName.toUpperCase()),
@@ -32,31 +33,29 @@
   };
 
   const findFirstSectionBrandLogo = scope => {
-    const firstSection =
-      scope.querySelector(".oa-deck-section") || scope.querySelector("section.rGeu6w");
-
-    if (!(firstSection instanceof HTMLElement)) {
-      return null;
-    }
-
     const viewportCenter = window.innerWidth / 2;
-    const sectionTop = firstSection.getBoundingClientRect().top;
-    const candidates = Array.from(firstSection.querySelectorAll("img"))
-      .map(image => {
-        if (!(image instanceof HTMLImageElement)) {
-          return null;
-        }
+    const candidates = Array.from(scope.querySelectorAll("section.rGeu6w, .oa-deck-section"))
+      .filter(section => section instanceof HTMLElement)
+      .flatMap(section => {
+        const sectionTop = section.getBoundingClientRect().top;
 
-        const rect = image.getBoundingClientRect();
-        const src = image.currentSrc || image.getAttribute("src");
+        return Array.from(section.querySelectorAll("img")).map(image => {
+          if (!(image instanceof HTMLImageElement)) {
+            return null;
+          }
 
-        return {
-          image,
-          rect,
-          src,
-          relativeTop: rect.top - sectionTop,
-          centerDelta: Math.abs(rect.left + rect.width / 2 - viewportCenter)
-        };
+          const rect = image.getBoundingClientRect();
+          const src = image.currentSrc || image.getAttribute("src");
+
+          return {
+            image,
+            rect,
+            src,
+            sectionTop,
+            relativeTop: rect.top - sectionTop,
+            centerDelta: Math.abs(rect.left + rect.width / 2 - viewportCenter)
+          };
+        });
       })
       .filter(Boolean)
       .filter(({ src, rect, relativeTop }) => {
@@ -75,7 +74,7 @@
           rect.right <= window.innerWidth * 0.76
         );
       })
-      .sort((a, b) => a.centerDelta - b.centerDelta || b.rect.width - a.rect.width);
+      .sort((a, b) => a.rect.top - b.rect.top || a.centerDelta - b.centerDelta || b.rect.width - a.rect.width);
 
     return candidates[0] || null;
   };
@@ -138,51 +137,15 @@
       nav.insertBefore(brand, links);
     }
 
-    scope.querySelectorAll(".oa-header-logo-source").forEach(element => {
-      element.classList.remove("oa-header-logo-source");
-    });
-
-    const firstSection =
-      scope.querySelector(".oa-deck-section") || scope.querySelector("section.rGeu6w");
-    const existingLogo = brand.querySelector(".oa-brand-logo");
-    const existingLogoSrc =
-      existingLogo instanceof HTMLImageElement
-        ? existingLogo.currentSrc || existingLogo.getAttribute("src")
-        : null;
-    const brandLogo = findFirstSectionBrandLogo(scope);
-    const brandLogoSrc = brandLogo?.src || existingLogoSrc || null;
-
-    if (brandLogo?.image instanceof HTMLElement) {
-      brandLogo.image.classList.add("oa-header-logo-source");
-    }
-
     brand.classList.add("oa-brand-lockup--image");
-
-    if (!brandLogoSrc) {
-      brand.classList.add("oa-brand-lockup--pending");
-
-      if (firstSection instanceof HTMLElement) {
-        firstSection.querySelectorAll("img").forEach(image => {
-          if (!(image instanceof HTMLImageElement) || image.dataset.oaHeaderLogoWatch === "true") {
-            return;
-          }
-
-          image.dataset.oaHeaderLogoWatch = "true";
-          image.addEventListener("load", () => ensureNavHeader(scope), { once: true });
-        });
-      }
-
-      brand.innerHTML = `<div class="oa-brand-logo-frame" aria-hidden="true"></div>`;
-    } else {
-      brand.classList.remove("oa-brand-lockup--pending");
-      brand.innerHTML = [
-        `<span class="oa-brand-rule oa-brand-rule-left" aria-hidden="true"></span>`,
-        `<div class="oa-brand-logo-frame">`,
-        `<img class="oa-brand-logo" src="${brandLogoSrc}" alt="Orchid Assembly" />`,
-        `</div>`,
-        `<span class="oa-brand-rule oa-brand-rule-right" aria-hidden="true"></span>`
-      ].join("");
-    }
+    brand.classList.remove("oa-brand-lockup--pending");
+    brand.innerHTML = [
+      `<span class="oa-brand-rule oa-brand-rule-left" aria-hidden="true"></span>`,
+      `<div class="oa-brand-logo-frame">`,
+      `<img class="oa-brand-logo" src="${headerLogoAsset}" alt="Orchid Assembly" />`,
+      `</div>`,
+      `<span class="oa-brand-rule oa-brand-rule-right" aria-hidden="true"></span>`
+    ].join("");
 
     const menuItems = Array.from(nav.querySelectorAll("a[role='menuitem']"));
 
@@ -355,6 +318,72 @@
 
         target.classList.add("oa-hide-section-brand");
       });
+
+      const sectionTop = section.getBoundingClientRect().top;
+      const viewportCenter = window.innerWidth / 2;
+      const imageCandidates = Array.from(section.querySelectorAll("img"))
+        .map(image => {
+          if (!(image instanceof HTMLImageElement)) {
+            return null;
+          }
+
+          const rect = image.getBoundingClientRect();
+          const src = image.currentSrc || image.getAttribute("src");
+
+          return {
+            image,
+            rect,
+            src,
+            relativeTop: rect.top - sectionTop,
+            centerDelta: Math.abs(rect.left + rect.width / 2 - viewportCenter)
+          };
+        })
+        .filter(Boolean);
+
+      const logo = imageCandidates
+        .filter(({ src, rect, relativeTop }) => {
+          if (!src) {
+            return false;
+          }
+
+          return (
+            rect.width >= 180 &&
+            rect.width <= 360 &&
+            rect.height >= 24 &&
+            rect.height <= 96 &&
+            relativeTop >= 36 &&
+            relativeTop <= 180 &&
+            rect.left >= window.innerWidth * 0.24 &&
+            rect.right <= window.innerWidth * 0.76
+          );
+        })
+        .sort((a, b) => a.centerDelta - b.centerDelta || b.rect.width - a.rect.width)[0];
+
+      if (!logo) {
+        return;
+      }
+
+      logo.image.classList.add("oa-suppress-section-brand-asset");
+
+      const logoMidY = logo.rect.top + logo.rect.height / 2;
+
+      imageCandidates
+        .filter(({ image, rect }) => {
+          if (image === logo.image) {
+            return false;
+          }
+
+          return (
+            rect.height <= 6 &&
+            rect.width >= 100 &&
+            rect.width <= 360 &&
+            Math.abs(rect.top + rect.height / 2 - logoMidY) <= 20 &&
+            (rect.right < logo.rect.left - 24 || rect.left > logo.rect.right + 24)
+          );
+        })
+        .forEach(({ image }) => {
+          image.classList.add("oa-suppress-section-brand-asset");
+        });
     });
   };
 
