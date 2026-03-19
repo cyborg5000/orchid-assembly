@@ -31,6 +31,55 @@
     return !Array.from(element.children).some(child => normalize(child.textContent) === target);
   };
 
+  const findFirstSectionBrandLogo = scope => {
+    const firstSection =
+      scope.querySelector(".oa-deck-section") || scope.querySelector("section.rGeu6w");
+
+    if (!(firstSection instanceof HTMLElement)) {
+      return null;
+    }
+
+    const viewportCenter = window.innerWidth / 2;
+    const sectionTop = firstSection.getBoundingClientRect().top;
+    const candidates = Array.from(firstSection.querySelectorAll("img"))
+      .map(image => {
+        if (!(image instanceof HTMLImageElement)) {
+          return null;
+        }
+
+        const rect = image.getBoundingClientRect();
+        const src = image.currentSrc || image.getAttribute("src");
+
+        return {
+          image,
+          rect,
+          src,
+          relativeTop: rect.top - sectionTop,
+          centerDelta: Math.abs(rect.left + rect.width / 2 - viewportCenter)
+        };
+      })
+      .filter(Boolean)
+      .filter(({ src, rect, relativeTop }) => {
+        if (!src) {
+          return false;
+        }
+
+        return (
+          rect.width >= 180 &&
+          rect.width <= 360 &&
+          rect.height >= 24 &&
+          rect.height <= 96 &&
+          relativeTop >= 36 &&
+          relativeTop <= 180 &&
+          rect.left >= window.innerWidth * 0.24 &&
+          rect.right <= window.innerWidth * 0.76
+        );
+      })
+      .sort((a, b) => a.centerDelta - b.centerDelta || b.rect.width - a.rect.width);
+
+    return candidates[0] || null;
+  };
+
   const ensureNavHeader = scope => {
     const nav = scope.querySelector("nav.jDe9Eg, nav");
 
@@ -55,10 +104,30 @@
           return;
         }
 
-        links.appendChild(child);
+        const isMenuItem = child.matches("a[role='menuitem']");
+
+        if (!isMenuItem) {
+          links.appendChild(child);
+        }
       });
 
       nav.appendChild(links);
+    }
+
+    let leftSide = nav.querySelector(".oa-nav-side-left");
+
+    if (!(leftSide instanceof HTMLElement)) {
+      leftSide = document.createElement("div");
+      leftSide.className = "oa-nav-side oa-nav-side-left";
+      nav.insertBefore(leftSide, links);
+    }
+
+    let rightSide = nav.querySelector(".oa-nav-side-right");
+
+    if (!(rightSide instanceof HTMLElement)) {
+      rightSide = document.createElement("div");
+      rightSide.className = "oa-nav-side oa-nav-side-right";
+      nav.insertBefore(rightSide, links);
     }
 
     let brand = nav.querySelector(".oa-brand-lockup");
@@ -66,18 +135,75 @@
     if (!(brand instanceof HTMLElement)) {
       brand = document.createElement("div");
       brand.className = "oa-brand-lockup";
-      brand.innerHTML = [
-        `<span class="oa-brand-rule oa-brand-rule-left" aria-hidden="true"></span>`,
-        `<div class="oa-brand-stack">`,
-        `<span class="oa-brand-name">${brandName}</span>`,
-        `<span class="oa-brand-line">${brandLine}</span>`,
-        `</div>`,
-        `<span class="oa-brand-rule oa-brand-rule-right" aria-hidden="true"></span>`
-      ].join("");
       nav.insertBefore(brand, links);
     }
 
+    scope.querySelectorAll(".oa-header-logo-source").forEach(element => {
+      element.classList.remove("oa-header-logo-source");
+    });
+
+    const firstSection =
+      scope.querySelector(".oa-deck-section") || scope.querySelector("section.rGeu6w");
+    const existingLogo = brand.querySelector(".oa-brand-logo");
+    const existingLogoSrc =
+      existingLogo instanceof HTMLImageElement
+        ? existingLogo.currentSrc || existingLogo.getAttribute("src")
+        : null;
+    const brandLogo = findFirstSectionBrandLogo(scope);
+    const brandLogoSrc = brandLogo?.src || existingLogoSrc || null;
+
+    if (brandLogo?.image instanceof HTMLElement) {
+      brandLogo.image.classList.add("oa-header-logo-source");
+    }
+
+    brand.classList.add("oa-brand-lockup--image");
+
+    if (!brandLogoSrc) {
+      brand.classList.add("oa-brand-lockup--pending");
+
+      if (firstSection instanceof HTMLElement) {
+        firstSection.querySelectorAll("img").forEach(image => {
+          if (!(image instanceof HTMLImageElement) || image.dataset.oaHeaderLogoWatch === "true") {
+            return;
+          }
+
+          image.dataset.oaHeaderLogoWatch = "true";
+          image.addEventListener("load", () => ensureNavHeader(scope), { once: true });
+        });
+      }
+
+      brand.innerHTML = `<div class="oa-brand-logo-frame" aria-hidden="true"></div>`;
+    } else {
+      brand.classList.remove("oa-brand-lockup--pending");
+      brand.innerHTML = [
+        `<span class="oa-brand-rule oa-brand-rule-left" aria-hidden="true"></span>`,
+        `<div class="oa-brand-logo-frame">`,
+        `<img class="oa-brand-logo" src="${brandLogoSrc}" alt="Orchid Assembly" />`,
+        `</div>`,
+        `<span class="oa-brand-rule oa-brand-rule-right" aria-hidden="true"></span>`
+      ].join("");
+    }
+
     const menuItems = Array.from(nav.querySelectorAll("a[role='menuitem']"));
+
+    if (menuItems.length) {
+      const lengths = menuItems.map(item => normalize(item.textContent).length);
+      const total = lengths.reduce((sum, value) => sum + value, 0);
+      let running = 0;
+      let splitIndex = Math.max(1, Math.floor(menuItems.length / 2));
+
+      for (let index = 0; index < lengths.length; index += 1) {
+        running += lengths[index];
+
+        if (running >= total / 2) {
+          splitIndex = Math.min(menuItems.length - 1, index + 1);
+          break;
+        }
+      }
+
+      leftSide.replaceChildren(...menuItems.slice(0, splitIndex));
+      rightSide.replaceChildren(...menuItems.slice(splitIndex));
+    }
 
     if (!menuItems.some(item => item.getAttribute("aria-current") === "page") && menuItems[0]) {
       menuItems[0].setAttribute("aria-current", "page");
@@ -167,7 +293,7 @@
           return;
         }
 
-        if (Math.abs(event.deltaY) < 8) {
+        if (Math.abs(event.deltaY) < 4) {
           return;
         }
 
@@ -190,7 +316,7 @@
         window.clearTimeout(unlockTimer);
         unlockTimer = window.setTimeout(() => {
           locked = false;
-        }, reduceMotion.matches ? 120 : 700);
+        }, reduceMotion.matches ? 120 : 520);
       },
       { passive: false }
     );
@@ -218,8 +344,9 @@
         ) {
           const parent = target.parentElement;
           const parentRect = parent.getBoundingClientRect();
+          const sectionRect = section.getBoundingClientRect();
 
-          if (parentRect.height > 180) {
+          if (parentRect.height > 260 || parentRect.width > sectionRect.width * 0.95) {
             break;
           }
 
