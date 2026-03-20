@@ -134,6 +134,13 @@ button {
   scroll-snap-stop: always;
   overflow: clip;
   isolation: isolate;
+  padding-top: 80px; /* Account for fixed header */
+}
+
+@media (max-width: 768px) {
+  .deck-section {
+    padding-top: 70px;
+  }
 }
 
 .deck-section__backdrop,
@@ -998,5 +1005,226 @@ button {
     opacity: 1;
     transform: none;
     filter: none;
+  }
+}
+
+/* ========================================
+   SITE HEADER - Sticky Navigation
+   ======================================== */
+
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  padding: 1rem 2rem;
+  transition: all 0.3s ease;
+  background: linear-gradient(to bottom, rgba(5, 1, 10, 0.9), transparent);
+}
+
+.site-header--scrolled {
+  background: rgba(5, 1, 10, 0.95);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+  padding: 0.75rem 2rem;
+}
+
+.site-header__container {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.site-header__logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.site-header__logo-img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+.site-header__logo-text {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.15em;
+}
+
+.site-header__nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.site-header__nav-item {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  position: relative;
+}
+
+.site-header__nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: var(--cyan);
+  transition: all 0.2s ease;
+  transform: translateX(-50%);
+}
+
+.site-header__nav-item:hover {
+  color: var(--text);
+}
+
+.site-header__nav-item:hover::after {
+  width: 60%;
+}
+
+.site-header__nav-item--active {
+  color: var(--cyan);
+}
+
+.site-header__nav-item--active::after {
+  width: 60%;
+}
+
+.site-header__mobile-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+.site-header__mobile-toggle span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--text);
+  transition: all 0.3s ease;
+}
+
+.site-header__mobile-toggle--open span:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.site-header__mobile-toggle--open span:nth-child(2) {
+  opacity: 0;
+}
+
+.site-header__mobile-toggle--open span:nth-child(3) {
+  transform: rotate(-45deg) translate(5px, -5px);
+}
+
+/* Mobile Navigation */
+@media (max-width: 768px) {
+  .site-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .site-header__logo-img {
+    height: 32px;
+  }
+
+  .site-header__logo-text {
+    font-size: 0.9rem;
+  }
+
+  .site-header__mobile-toggle {
+    display: flex;
+  }
+
+  .site-header__nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(5, 1, 10, 0.98);
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .site-header__nav--open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .site-header__nav-item {
+    font-size: 1.25rem;
+    padding: 1rem 2rem;
+  }
+}
+
+/* ========================================
+   SCROLL TO TOP BUTTON
+   ======================================== */
+
+.scroll-to-top {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 999;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--cyan);
+  border: none;
+  color: var(--bg);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(34, 214, 255, 0.3);
+}
+
+.scroll-to-top--visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.scroll-to-top:hover {
+  background: var(--text);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(34, 214, 255, 0.4);
+}
+
+@media (max-width: 768px) {
+  .scroll-to-top {
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 44px;
+    height: 44px;
   }
 }
