@@ -1228,3 +1228,42 @@ button {
     height: 44px;
   }
 }
+
+/* ========================================
+   HIDE SECTION CHROME - Using sticky header now
+   ======================================== */
+
+.deck-section__chrome {
+  display: none !important;
+}
+
+.deck-section__footer {
+  display: none !important;
+}
+
+/* Show them only if no sticky header (fallback) */
+.deck-shell:not(:has(.site-header)) .deck-section__chrome,
+.deck-shell:not(:has(.site-header)) .deck-section__footer {
+  display: flex !important;
+}
+
+/* ========================================
+   CONTENT LAYOUT FIXES
+   ======================================== */
+
+.deck-section__content {
+  min-height: calc(100svh - 160px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero-grid {
+  min-height: auto;
+  padding: 2rem 0;
+}
+
+.statement-layout {
+  min-height: auto;
+  padding: 2rem 0;
+}
