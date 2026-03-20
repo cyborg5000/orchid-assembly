@@ -1241,12 +1241,6 @@ button {
   display: none !important;
 }
 
-/* Show them only if no sticky header (fallback) */
-.deck-shell:not(:has(.site-header)) .deck-section__chrome,
-.deck-shell:not(:has(.site-header)) .deck-section__footer {
-  display: flex !important;
-}
-
 /* ========================================
    CONTENT LAYOUT FIXES
    ======================================== */
