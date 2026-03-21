@@ -123,6 +123,7 @@ export default function DeckSection({ index, isActive, registerSection, section 
 
   return (
     <section
+      id={section.id}
       aria-label={section.ariaLabel}
       className={`deck-section deck-section--${section.variant}${isActive ? ' is-active' : ''}`}
       data-index={index}

@@ -10,8 +10,8 @@ const sharedChrome = {
 const sections = [
   {
     ...sharedChrome,
-    ariaLabel: 'Brand statement section',
-    navLabel: 'About',
+    ariaLabel: 'Opening hero section',
+    navLabel: 'Home',
     artSlots: {
       brandMark: 'orchid logo',
       circuits: [
@@ -42,7 +42,7 @@ const sections = [
   {
     ...sharedChrome,
     ariaLabel: 'Opening hero section',
-    navLabel: 'Home',
+    navLabel: 'About',
     artSlots: {
       beams: [
         { className: 'hero-stage__beam--1', label: 'light beam placeholder 1' },

@@ -24,11 +24,29 @@ export default function ScrollDeck({ sections }) {
     }
 
     setActiveIndex(nextIndex);
+    
+    // Update URL hash without triggering scroll
+    const sectionId = sections[nextIndex]?.id;
+    if (sectionId) {
+      window.history.pushState(null, '', `#${sectionId}`);
+    }
+    
     sectionNode.scrollIntoView({
       behavior: 'smooth',
       block: 'start'
     });
-  }, [sections.length]);
+  }, [sections]);
+
+  // Handle initial hash on mount
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (hash) {
+      const index = sections.findIndex(s => s.id === hash);
+      if (index !== -1) {
+        setTimeout(() => scrollToIndex(index), 100);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     sectionRefs.current = sectionRefs.current.slice(0, sections.length);
@@ -43,31 +61,25 @@ export default function ScrollDeck({ sections }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Use IntersectionObserver on window for reliable section detection
   useEffect(() => {
-    const deckNode = deckRef.current;
-    if (!deckNode) {
-      return undefined;
-    }
-
     const observer = new IntersectionObserver(
       (entries) => {
-        const mostVisible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((left, right) => right.intersectionRatio - left.intersectionRatio)[0];
-
-        if (!mostVisible) {
-          return;
-        }
-
-        const nextIndex = Number(mostVisible.target.dataset.index);
-
-        if (!Number.isNaN(nextIndex)) {
-          setActiveIndex(nextIndex);
-        }
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
+            const nextIndex = Number(entry.target.dataset.index);
+            if (!Number.isNaN(nextIndex) && nextIndex !== activeIndexRef.current) {
+              setActiveIndex(nextIndex);
+              const sectionId = sections[nextIndex]?.id;
+              if (sectionId) {
+                window.history.replaceState(null, '', `#${sectionId}`);
+              }
+            }
+          }
+        });
       },
       {
-        root: deckNode,
-        threshold: [0.35, 0.5, 0.68, 0.86]
+        threshold: [0.3, 0.5, 0.7]
       }
     );
 
@@ -80,54 +92,10 @@ export default function ScrollDeck({ sections }) {
     return () => observer.disconnect();
   }, [sections]);
 
+  // Keyboard navigation
   useEffect(() => {
     const deckNode = deckRef.current;
-    if (!deckNode || typeof window === 'undefined') {
-      return undefined;
-    }
-
-    const finePointerQuery = window.matchMedia('(pointer: fine)');
-    const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-    if (!finePointerQuery.matches) {
-      return undefined;
-    }
-
-    let locked = false;
-    let unlockTimer = 0;
-
-    const doScrollToIndex = (index) => {
-      scrollToIndex(index);
-    };
-
-    const unlock = () => {
-      locked = false;
-    };
-
-    const onWheel = (event) => {
-      // Allow normal scrolling when not in snap mode or if near top/bottom
-      if (Math.abs(event.deltaY) < 18) {
-        return;
-      }
-
-      // Don't hijack scroll if user is navigating with nav
-      if (event.target.closest('.site-header__nav')) {
-        return;
-      }
-
-      event.preventDefault();
-
-      if (locked) {
-        return;
-      }
-
-      locked = true;
-
-      const direction = event.deltaY > 0 ? 1 : -1;
-      doScrollToIndex(activeIndexRef.current + direction);
-
-      unlockTimer = window.setTimeout(unlock, reducedMotionQuery.matches ? 180 : 720);
-    };
+    if (!deckNode) return;
 
     const onKeyDown = (event) => {
       // Don't hijack if user is in an input
@@ -137,34 +105,28 @@ export default function ScrollDeck({ sections }) {
 
       if (event.key === 'ArrowDown' || event.key === 'PageDown' || event.key === ' ') {
         event.preventDefault();
-        doScrollToIndex(activeIndexRef.current + 1);
+        scrollToIndex(activeIndexRef.current + 1);
       }
 
       if (event.key === 'ArrowUp' || event.key === 'PageUp') {
         event.preventDefault();
-        doScrollToIndex(activeIndexRef.current - 1);
+        scrollToIndex(activeIndexRef.current - 1);
       }
 
       if (event.key === 'Home') {
         event.preventDefault();
-        doScrollToIndex(0);
+        scrollToIndex(0);
       }
 
       if (event.key === 'End') {
         event.preventDefault();
-        doScrollToIndex(sections.length - 1);
+        scrollToIndex(sections.length - 1);
       }
     };
 
-    deckNode.addEventListener('wheel', onWheel, { passive: false });
-    deckNode.addEventListener('keydown', onKeyDown);
-
-    return () => {
-      window.clearTimeout(unlockTimer);
-      deckNode.removeEventListener('wheel', onWheel);
-      deckNode.removeEventListener('keydown', onKeyDown);
-    };
-  }, [sections, scrollToIndex]);
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [scrollToIndex, sections.length]);
 
   const registerSection = (index) => (node) => {
     sectionRefs.current[index] = node;
