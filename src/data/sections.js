@@ -11,6 +11,7 @@ const sections = [
   {
     ...sharedChrome,
     ariaLabel: 'Brand statement section',
+    navLabel: 'About',
     artSlots: {
       brandMark: 'orchid logo',
       circuits: [
@@ -41,6 +42,7 @@ const sections = [
   {
     ...sharedChrome,
     ariaLabel: 'Opening hero section',
+    navLabel: 'Home',
     artSlots: {
       beams: [
         { className: 'hero-stage__beam--1', label: 'light beam placeholder 1' },
